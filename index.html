@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script>
+//utilities
+$ =function(query,e){return (e||document).querySelector(query)};
+$$=function(query,e){return [].slice.call((e||document).querySelectorAll(query))}
+$.get=function(url,ok_cb,ko_cb){
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange=function(){
+		if(xhr.readyState!=4)return;
+		if(xhr.status==200)return ok_cb(xhr.response,xhr);
+		if(ko_cb)return ko_cb(xhr.response,xhr.statusText);
+	};
+	xhr.open('GET',url);
+	xhr.send();
+}
+$.toNode=function(jsonML){
+	var node=document.createElement(jsonML.shift());
+	jsonML.forEach(function(j){
+		if(j)switch(j.constructor){
+			case Array :node.appendChild($.toNode(j));break;
+			case Object:for(attr in j){
+				if(attr.match(/^on/))node[attr]=j[attr];//event attribut
+				else node.setAttribute(attr,j[attr])//other attribut
+			};break;
+			case String:node.appendChild(document.createTextNode(j));break;
+		}
+	});
+	return node;
+}
+//////////:
+function CORS(q){return 'http://allow-any-origin.appspot.com/'+q}
+
+function updateRSS(url,ok_cb,ko_cb){
+	if(localStorage[url])return ok_cb(localStorage[url]);//already in stock
+	$.get(CORS(url),function(xml){
+		var rss=(new DOMParser()).parseFromString(xml,"text/xml");
+		var items=[].slice.call(rss.querySelectorAll('item')).map(function(item){return{
+			title:$('title',item).textContent,
+			desc:($('description',item)||{}).textContent,
+			href:($('guid',item)||{}).textContent,
+			date:new Date($('pubDate',item).textContent)}});
+		ok_cb(localStorage[url]=JSON.stringify(items));
+	},ko_cb);
+}
+function init(){
+	$$('[data-fetch]').forEach(function(node){
+		updateRSS(node.dataset['fetch'],function(result){
+			node.appendChild($.toNode(["h2",node.dataset['title']]))
+			node.appendChild($.toNode(["ul"].concat(JSON.parse(result).map(function(item){
+				if((new Date()-new Date(item.date))/(1000*60*60*24)>2)return [];//hide too old (2+day) news
+				return ["li",["a",{href:item.href},item.title],["span",(new Date(item.date)).toDateString()],["p",(item.desc||'').replace(/<.*?>/g,' ')]]
+			}))))
+		})
+	})
+}
+//;
+</script>
+</head>
+<body onload="init()">
+	<button onclick="for(var a in localStorage)delete localStorage[a]">Clear</button>
+	<p data-format="rss" data-title="phoronix" data-fetch="http://www.phoronix.com/rss.php"><p>
+	<p data-format="rss" data-title="developpez" data-fetch="http://www.developpez.com/index/rss"><p>
+	<p data-format="rss" data-title="minimachines" data-fetch="http://feedpress.me/minimachines/"><p>
+	<p data-format="rss" data-title="google news" data-fetch="http://news.google.com/news/feeds?hl=en&topic=t&output=rss"><p>
+	<p data-format="rss" data-title="nextinpact" data-fetch="http://www.nextinpact.com/rss/news.xml"><p>
+	<p data-format="rss" data-title="logic-sunrise" data-fetch="http://www.logic-sunrise.com/forums/rss/forums/1-news-fr/"><p>
+	<p data-format="rss" data-title="/r/javascript" data-fetch="http://www.reddit.com/r/javascript/.rss"><p>
+	<p data-format="rss" data-title="/r/programming" data-fetch="http://www.reddit.com/r/programming/.rss"><p>
+	<p data-format="rss" data-title="yify" data-fetch="https://yts.to/rss/0/all/all/7"><p>
+	<p data-format="rss" data-title="to/PS3" data-fetch="https://kickass.to/PS3/?rss=1"><p>
+</body>
+</html>
