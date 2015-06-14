@@ -10,11 +10,16 @@ body{background:#FFF;padding:2em 0 0 0;font-family:sans-serif;}
 nav{background:#F48;position:fixed;right:0;top:0;left:0}
 button{background:none;color:#FFF;border:none;font-size:1.5em;}
 ul{list-style: none;}
+li span{float:right;opacity:.5;display:none;}
 li{text-align:justify;padding:1em;}
-li span{float:right;opacity:.5}
 </style>
 <script>
 //utilities
+function unescapeEntities(txt){
+	var a=document.createElement("A")
+	a.innerHTML=txt;
+	return a.textContent;
+}
 $ =function(query,e){return (e||document).querySelector(query)};
 $$=function(query,e){return [].slice.call((e||document).querySelectorAll(query))}
 $.get=function(url,ok_cb,ko_cb){
@@ -48,11 +53,13 @@ function updateRSS(url,ok_cb,ko_cb){
 	if(localStorage[url])return ok_cb(localStorage[url]);//already in stock
 	$.get(CORS(url),function(xml){
 		var rss=(new DOMParser()).parseFromString(xml,"text/xml");
-		var items=[].slice.call(rss.querySelectorAll('item')).map(function(item){return{
+		var items=[].slice.call(rss.querySelectorAll('item')).map(function(item){
+		return{
 			title:$('title',item).textContent,
-			desc:($('description',item)||{}).textContent,
+			desc:unescapeEntities(($('description',item)||{}).textContent),
 			href:($('guid',item)||{}).textContent,
-			date:new Date($('pubDate',item).textContent)}});
+			date:new Date($('pubDate',item).textContent),
+		}});
 		ok_cb(localStorage[url]=JSON.stringify(items));
 	},ko_cb);
 }
@@ -62,7 +69,7 @@ function init(){
 			node.appendChild($.toNode(["h2",node.dataset['title']]))
 			node.appendChild($.toNode(["ul"].concat(JSON.parse(result).map(function(item){
 				if((new Date()-new Date(item.date))/(1000*60*60*24)>2)return [];//hide too old (2+day) news
-				return ["li",["a",{href:item.href},item.title],["span",(new Date(item.date)).toDateString()],["p",(item.desc||'').replace(/<.*?>/g,' ')]]
+				return ["li",["a",{href:item.href},item.title],["span",(new Date(item.date)).toDateString()],["p",unescapeEntities(item.desc||'').replace(/<.*?>/g,' ')]]
 			}))))
 		})
 	})
@@ -70,7 +77,7 @@ function init(){
 //;
 </script>
 </head>
-<body>
+<body onload="init()">
 	<p data-format="rss" data-title="phoronix" data-fetch="http://www.phoronix.com/rss.php"><p>
 	<p data-format="rss" data-title="developpez" data-fetch="http://www.developpez.com/index/rss"><p>
 	<p data-format="rss" data-title="minimachines" data-fetch="http://feedpress.me/minimachines/"><p>
@@ -80,7 +87,6 @@ function init(){
 	<p data-format="rss" data-title="/r/javascript" data-fetch="http://www.reddit.com/r/javascript/.rss"><p>
 	<p data-format="rss" data-title="/r/programming" data-fetch="http://www.reddit.com/r/programming/.rss"><p>
 	<p data-format="rss" data-title="yify" data-fetch="https://yts.to/rss/0/all/all/7"><p>
-	<p data-format="rss" data-title="to/PS3" data-fetch="https://kickass.to/PS3/?rss=1"><p>
 	<nav><button onclick="for(var a in localStorage)delete localStorage[a];init()">&#8635;</button></nav>
 </body>
 </html>
