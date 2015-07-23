@@ -1,14 +1,13 @@
 <!doctype html>
-<html>
+<html manifest="appcache.manifest">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 *{margin:0;padding:0}
 h2{text-align:center;background:#11CED2;color:#FFF;padding:.2em;margin:0 0 1em 0;}
-body{background:#FFF;padding:2em 0 0 0;font-family:sans-serif;}
-nav{background:#F48;position:fixed;right:0;top:0;left:0}
-button{background:none;color:#FFF;border:none;font-size:1.5em;}
+body{background:#FFF;padding:0 0 2em 0;font-family:sans-serif;}
+button{position:fixed;bottom:.5em;right:.5em;background:#F48;color:#FFF;border:none;font-size:2em;width:2em;height:2em;border-radius:2em;cursor: pointer;box-shadow: .02em .02em .15em #000;}
 ul{list-style: none;}
 li{padding:1em;}
 li span{float:right;opacity:.5;display:none;}
@@ -59,13 +58,14 @@ function updateRSS(url,ok_cb,ko_cb){
 			title:$('title',item).textContent,
 			desc:unescapeEntities(($('description',item)||{}).textContent),
 			href:($('guid',item)||{}).textContent,
-			date:new Date($('pubDate',item).textContent),
+			date:new Date(($('pubDate',item)||{}).textContent),
 		}});
 		ok_cb(localStorage[url]=JSON.stringify(items));
 	},ko_cb);
 }
 function init(){
 	$$('[data-fetch]').forEach(function(node){
+		node.innerHTML=''
 		updateRSS(node.dataset['fetch'],function(result){
 			node.appendChild($.toNode(["h2",node.dataset['title']]))
 			node.appendChild($.toNode(["ul"].concat(JSON.parse(result).map(function(item){
@@ -79,15 +79,15 @@ function init(){
 </script>
 </head>
 <body onload="init()">
-	<p data-format="rss" data-title="phoronix" data-fetch="http://www.phoronix.com/rss.php"><p>
-	<p data-format="rss" data-title="developpez" data-fetch="http://www.developpez.com/index/rss"><p>
-	<p data-format="rss" data-title="minimachines" data-fetch="http://feedpress.me/minimachines/"><p>
-	<p data-format="rss" data-title="google news" data-fetch="http://news.google.com/news/feeds?hl=en&topic=t&output=rss"><p>
-	<p data-format="rss" data-title="nextinpact" data-fetch="http://www.nextinpact.com/rss/news.xml"><p>
-	<p data-format="rss" data-title="logic-sunrise" data-fetch="http://www.logic-sunrise.com/forums/rss/forums/1-news-fr/"><p>
-	<p data-format="rss" data-title="/r/javascript" data-fetch="http://www.reddit.com/r/javascript/.rss"><p>
-	<p data-format="rss" data-title="/r/programming" data-fetch="http://www.reddit.com/r/programming/.rss"><p>
-	<p data-format="rss" data-title="yify" data-fetch="https://yts.to/rss/0/all/all/7"><p>
-	<nav><button onclick="for(var a in localStorage)delete localStorage[a];init()">&#8635;</button></nav>
+	<p data-format="rss" data-title="phoronix" data-fetch="http://www.phoronix.com/rss.php"></p>
+	<p data-format="rss" data-title="developpez" data-fetch="http://www.developpez.com/index/rss"></p>
+	<p data-format="rss" data-title="minimachines" data-fetch="http://feedpress.me/minimachines/"></p>
+	<p data-format="rss" data-title="google news" data-fetch="http://news.google.com/news/feeds?hl=en&topic=t&output=rss"></p>
+	<p data-format="rss" data-title="nextinpact" data-fetch="http://www.nextinpact.com/rss/news.xml"></p>
+	<p data-format="rss" data-title="logic-sunrise" data-fetch="http://www.logic-sunrise.com/forums/rss/forums/1-news-fr/"></p>
+	<p data-format="rss" data-title="/r/javascript" data-fetch="http://www.reddit.com/r/javascript/.rss"></p>
+	<p data-format="rss" data-title="/r/programming" data-fetch="http://www.reddit.com/r/programming/.rss"></p>
+	<p data-format="rss" data-title="yify" data-fetch="https://yts.to/rss/0/all/all/7"></p>
+	<button onclick="window.scrollTo(0,0);for(var a in localStorage)if(a.match(/^https?:/))delete localStorage[a];init()">&#8635;</button>
 </body>
 </html>
