@@ -53,11 +53,11 @@ function updateRSS(url,ok_cb,ko_cb){
 	if(localStorage[url])return ok_cb(localStorage[url]);//already in stock
 	$.get(CORS(url),function(xml){
 		var rss=(new DOMParser()).parseFromString(xml,"text/xml");
-		var items=[].slice.call(rss.querySelectorAll('item')).map(function(item){
+		var items=[].slice.call(rss.querySelectorAll('item,entry')).map(function(item){
 		return{
-			title:$('title',item).textContent,
-			desc:unescapeEntities(($('description',item)||{}).textContent),
-			href:($('guid',item)||{}).textContent,
+			title:$('title',item).textContent||'',
+			desc:unescapeEntities(($('description',item)||{}).textContent||''),
+			href:($('guid',item)||{}).textContent || (($('link',item)||{}).attributes||{}).href,
 			date:new Date(($('pubDate',item)||{}).textContent),
 		}});
 		ok_cb(localStorage[url]=JSON.stringify(items));
@@ -69,7 +69,7 @@ function init(){
 		updateRSS(node.dataset['fetch'],function(result){
 			node.appendChild($.toNode(["h2",node.dataset['title']]))
 			node.appendChild($.toNode(["ul"].concat(JSON.parse(result).map(function(item){
-				if((new Date()-new Date(item.date))/(1000*60*60*24)>2)return [];//hide too old (2+day) news
+				if(item.date && (new Date()-new Date(item.date))/(1000*60*60*24)>2)return [];//hide too old (2+day) news
 				return ["li",["a",{href:item.href},item.title],["span",(new Date(item.date)).toDateString()],["p",unescapeEntities(item.desc||'').replace(/<.*?>/g,' ')]]
 			}))))
 		})
@@ -86,6 +86,7 @@ function init(){
 	<p data-format="rss" data-title="nextinpact" data-fetch="http://www.nextinpact.com/rss/news.xml"></p>
 	<p data-format="rss" data-title="logic-sunrise" data-fetch="http://www.logic-sunrise.com/forums/rss/forums/1-news-fr/"></p>
 	<p data-format="rss" data-title="/r/programming" data-fetch="https://www.reddit.com/r/programming/.rss"></p>
+	<p data-format="rss" data-title="/r/linux" data-fetch="https://www.reddit.com/r/linux/.rss"></p>
 	<p data-format="rss" data-title="lwn" data-fetch="https://lwn.net/headlines/rss"></p>
 	<button onclick="window.scrollTo(0,0);for(var a in localStorage)if(a.match(/^https?:/))delete localStorage[a];init()">&#8635;</button>
 </body>
