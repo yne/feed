@@ -57,7 +57,7 @@ function updateRSS(url,ok_cb,ko_cb){
 		return{
 			title:$('title',item).textContent||'',
 			desc:unescapeEntities(($('description',item)||{}).textContent||''),
-			href:($('guid',item)||{}).textContent || (($('link',item)||{}).attributes||{}).href,
+			href:($('guid',item)||{}).textContent || ((($('link',item)||{}).attributes||{}).href||{}).value,
 			date:new Date(($('pubDate',item)||{}).textContent),
 		}});
 		ok_cb(localStorage[url]=JSON.stringify(items));
