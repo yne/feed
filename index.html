@@ -1,13 +1,17 @@
 <!doctype html>
-<html manifest="appcache.manifest">
-<head>
+<html lang="fr">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Feed</title>
+<meta name="description" content="Lightweight Vanilla RSS Feed player">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#042f4b" />
 <style>
-*{margin:0;padding:0}
-h2{text-align:center;background:#11CED2;color:#FFF;padding:.2em;margin:0 0 1em 0;position: sticky;top: 0;box-shadow: 0 0.1em 0.3em rgba(0,0,0,0.5);}
-body{background:#FFF;padding:0 0 2em 0;font-family:sans-serif;}
-button{position:fixed;bottom:.5em;right:.5em;background:#F48;color:#FFF;border:none;font-size:2em;width:2em;height:2em;border-radius:2em;cursor: pointer;box-shadow: .02em .02em .15em #000;}
+*{margin:0;padding:0;}
+body{background:#FFF;color:#222;padding:0 0 2em 0;font-family:sans-serif;}
+a{color: #2b28c5;}
+a:not(:hover){text-decoration:none;}
+h2{text-align:center;background:#042f4b;color:#FFF;padding:.2em;margin:0 0 1em 0;position: sticky;top: 0;box-shadow: 0 0.1em 0.3em rgba(0,0,0,0.5);}
+button{position:fixed;bottom:.5em;right:.5em;background:#ed1250;color:#FFF;border:none;font-size:2em;width:2em;height:2em;border-radius:2em;cursor: pointer;box-shadow: .02em .02em .15em #000;}
 ul{list-style: none;}
 li{padding:1em;}
 li span{float:right;opacity:.5;display:none;}
@@ -17,7 +21,7 @@ li p{text-align:justify;overflow:hidden;}
 //utilities
 function unescapeEntities(txt){
 	var a=document.createElement("A")
-	a.innerHTML=txt;
+	a.innerHTML=txt.replace(/src=/g,'data-src=');
 	return a.textContent;
 }
 $ =function(query,e){return (e||document).querySelector(query)};
@@ -66,28 +70,28 @@ function updateRSS(url,ok_cb,ko_cb){
 function init(){
 	$$('[data-fetch]').forEach(function(node){
 		node.innerHTML=''
-		updateRSS(node.dataset['fetch'],function(result){
+		updateRSS('https://'+node.dataset['fetch'],function(result){
 			node.appendChild($.toNode(["h2",node.dataset['title']]))
 			node.appendChild($.toNode(["ul"].concat(JSON.parse(result).map(function(item){
 				if(item.date && (new Date()-new Date(item.date))/(1000*60*60*24)>2)return [];//hide too old (2+day) news
-				return ["li",["a",{href:item.href},item.title],["span",(new Date(item.date)).toDateString()],["p",unescapeEntities(item.desc||'').replace(/<.*?>/g,' ')]]
+				return ["li",["a",{href:item.href||item.link},item.title],["span",(new Date(item.date)).toDateString()],["p",unescapeEntities(item.desc||item.description||'').replace(/<.*?>/g,' ')]]
 			}))))
 		})
 	})
 }
-//;
+window.addEventListener('DOMContentLoaded', init);
 </script>
-</head>
-<body onload="init()">
-	<p data-format="rss" data-title="phoronix" data-fetch="http://www.phoronix.com/rss.php"></p>
-	<p data-format="rss" data-title="developpez" data-fetch="http://www.developpez.com/index/rss"></p>
-	<p data-format="rss" data-title="minimachines" data-fetch="http://feedpress.me/minimachines/"></p>
-	<p data-format="rss" data-title="i-programmer" data-fetch="https://www.i-programmer.info/index.php?option=com_ninjarsssyndicator&feed_id=1"></p>
-	<p data-format="rss" data-title="nextinpact" data-fetch="http://www.nextinpact.com/rss/news.xml"></p>
-	<p data-format="rss" data-title="logic-sunrise" data-fetch="http://www.logic-sunrise.com/forums/rss/forums/1-news-fr/"></p>
-	<p data-format="rss" data-title="/r/programming" data-fetch="https://www.reddit.com/r/programming/.rss"></p>
-	<p data-format="rss" data-title="/r/linux" data-fetch="https://www.reddit.com/r/linux/.rss"></p>
-	<p data-format="rss" data-title="lwn" data-fetch="https://lwn.net/headlines/rss"></p>
-	<button onclick="window.scrollTo(0,0);for(var a in localStorage)if(a.match(/^https?:/))delete localStorage[a];init()">&#8635;</button>
-</body>
-</html>
+<p data-format="rss" data-title="minimachines" data-fetch="feedpress.me/minimachines/"></p>
+<p data-format="rss" data-title="i-programmer" data-fetch="www.i-programmer.info/index.php?option=com_ninjarsssyndicator&feed_id=1"></p>
+<p data-format="rss" data-title="nextinpact" data-fetch="www.nextinpact.com/rss/news.xml"></p>
+<p data-format="rss" data-title="developpez" data-fetch="www.developpez.com/index/rss"></p>
+
+<p data-format="rss" data-title="logic-sunrise" data-fetch="www.logic-sunrise.com/forums/rss/forums/1-news-fr/"></p>
+
+<p data-format="rss" data-title="/r/programming" data-fetch="www.reddit.com/r/programming/.rss"></p>
+<p data-format="rss" data-title="HackerNews" data-fetch="news.ycombinator.com/rss"></p>
+<p data-format="rss" data-title="/r/linux" data-fetch="www.reddit.com/r/linux/.rss"></p>
+<p data-format="rss" data-title="phoronix" data-fetch="www.phoronix.com/rss.php"></p>
+<p data-format="rss" data-title="undeadly" data-fetch="undeadly.org/cgi?action=rss"></p>
+
+<button onclick="window.scrollTo(0,0);for(var a in localStorage)if(a.match(/^https?:/))delete localStorage[a];init()">&#8635;</button>
