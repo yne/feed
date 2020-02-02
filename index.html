@@ -60,8 +60,8 @@ function updateRSS(url,ok_cb,ko_cb){
 		var items=[].slice.call(rss.querySelectorAll('item,entry')).map(function(item){
 		return{
 			title:$('title',item).textContent||'',
-			desc:unescapeEntities(($('description',item)||{}).textContent||''),
-			href:($('guid',item)||{}).textContent || ((($('link',item)||{}).attributes||{}).href||{}).value,
+			desc:unescapeEntities(($('description',item)||{}).textContent||'') || ($('comments',item)||{}).textContent,
+			href:($('guid',item)||{}).textContent || ((($('link',item)||{}).attributes||{}).href||{}).value || ($('link',item)||{}).textContent||'',
 			date:new Date(($('pubDate',item)||{}).textContent),
 		}});
 		ok_cb(localStorage[url]=JSON.stringify(items));
@@ -74,7 +74,7 @@ function init(){
 			node.appendChild($.toNode(["h2",node.dataset['title']]))
 			node.appendChild($.toNode(["ul"].concat(JSON.parse(result).map(function(item){
 				if(item.date && (new Date()-new Date(item.date))/(1000*60*60*24)>2)return [];//hide too old (2+day) news
-				return ["li",["a",{href:item.href||item.link},item.title],["span",(new Date(item.date)).toDateString()],["p",unescapeEntities(item.desc||item.description||'').replace(/<.*?>/g,' ')]]
+				return ["li",["a",{href:item.href},item.title],["span",(new Date(item.date)).toDateString()],["p",unescapeEntities(item.desc||'').replace(/<.*?>/g,' ')]]
 			}))))
 		})
 	})
