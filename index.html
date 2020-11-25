@@ -51,7 +51,7 @@ $.toNode=function(jsonML){
 	return node;
 }
 //////////:
-function CORS(q){return '//allow-any-origin.appspot.com/'+q}
+function CORS(q){return '//cors-anywhere.herokuapp.com/'+q}
 
 function updateRSS(url,ok_cb,ko_cb){
 	if(localStorage[url])return ok_cb(localStorage[url]);//already in stock
