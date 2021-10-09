@@ -76,10 +76,12 @@
 	const el = (tag, props = {}, ch = []) => ch.reduce((e, c) => (e.appendChild(c), e), Object.assign(document.createElement(tag), props))
 	const CORS = (url) => 'https://cors-anywhere.herokuapp.com/https://' + url;
 	const html = (txt) => txt ? el('u', { innerHTML: txt.replace(/src=/g, 'data-src=') }).textContent : txt;
-	const cache = (url, prefix = 'feedcache_') => localStorage[prefix + url] ? Promise.resolve(localStorage[prefix + url]) : fetch(url).then((res) => res.text()).then((text) => localStorage[prefix + url] = text);
+	const cache = (url, until, pre = '_cache_', date = '_date_') => new Date - (+localStorage[date + url] || 0) < until ?
+		Promise.resolve(localStorage[pre + url]) :
+		fetch(url).then((res) => res.text()).then((text) => (localStorage[date + url] = +new Date, localStorage[pre + url] = text));
 	function loadFeed(url) {
 		const section = el('section', { innerText: 'loading' }); // create and return while the fetch is running async
-		cache(CORS(url)).then(txt => {
+		cache(CORS(url), 60 * 60 * 1000).then(txt => { // cache the feed for 1 hour
 			const rss = (new DOMParser()).parseFromString(txt, "text/xml");
 			section.replaceChildren(...[...rss.querySelectorAll('item,entry')].map(function (item) {
 				const $ = item.querySelector.bind(item);
@@ -105,7 +107,7 @@
 			el("header", { innerText: url.replace(/(www\.)|(\.xml)|(\.rss)|(\?.*)/g, ''), classList: 'inv sticky' }),
 			loadFeed(url)
 		]).flat() : [
-			el('article',{}, [
+			el('article', {}, [
 				el('p', { innerText: "No feeds url given ! put your hash (#) separated list of feeds URLs into the current URL" }),
 				el('a', { innerText: 'like this', href: `#${examples.join('#')}` }),
 				el('p', { innerText: "And bookmark it !" }),
