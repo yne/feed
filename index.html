@@ -1,95 +1,115 @@
 <!doctype html>
-<html lang="fr">
-<meta charset="utf-8">
 <title>Feed</title>
-<link rel="icon" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M7,6L4,6L4,7L7,7M7,4L3,4L3,5L7,5M7,1L6,1L6,3L7,3M5,1L3,1L3,3L5,3M2,7L2,0L8,0L8,7L7,8L1,8L0,7L0,1L2,1L1,2L1,7"></path></svg>'>
+<link rel="icon"
+	href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M7,6L4,6L4,7L7,7M7,4L3,4L3,5L7,5M7,1L6,1L6,3L7,3M5,1L3,1L3,3L5,3M2,7L2,0L8,0L8,7L7,8L1,8L0,7L0,1L2,1L1,2L1,7"></path></svg>'>
 <meta name="description" content="Lightweight Vanilla RSS Feed player">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#042f4b" />
 <style>
-*{margin:0;padding:0;}
-body{background:#FFF;color:#222;padding:0 0 2em 0;font-family:sans-serif;}
-a{color: #2b28c5;}
-a:not(:hover){text-decoration:none;}
-h2{text-align:center;background:#042f4b;color:#FFF;padding:.2em;margin:0 0 1em 0;position: sticky;top: 0;box-shadow: 0 0.1em 0.3em rgba(0,0,0,0.5);}
-button{position:fixed;bottom:.5em;right:.5em;background:#ed1250;color:#FFF;border:none;font-size:2em;width:2em;height:2em;border-radius:2em;cursor: pointer;box-shadow: .02em .02em .15em #000;}
-ul{list-style: none;}
-li{padding:1em;}
-li span{float:right;opacity:.5;display:none;}
-li p{text-align:justify;overflow:hidden;}
-</style>
-<script>
-//utilities
-function unescapeEntities(txt){
-	var a=document.createElement("A")
-	a.innerHTML=txt.replace(/src=/g,'data-src=');
-	return a.textContent;
-}
-$ =function(query,e){return (e||document).querySelector(query)};
-$$=function(query,e){return [].slice.call((e||document).querySelectorAll(query))}
-$.get=function(url,ok_cb,ko_cb){
-	var xhr = new XMLHttpRequest();
-	xhr.onreadystatechange=function(){
-		if(xhr.readyState!=4)return;
-		if(xhr.status==200)return ok_cb(xhr.response,xhr);
-		if(ko_cb)return ko_cb(xhr.response,xhr.statusText);
-	};
-	xhr.open('GET',url);
-	xhr.send();
-}
-$.toNode=function(jsonML){
-	var node=document.createElement(jsonML.shift());
-	jsonML.forEach(function(j){
-		if(j)switch(j.constructor){
-			case Array :node.appendChild($.toNode(j));break;
-			case Object:for(attr in j){
-				if(attr.match(/^on/))node[attr]=j[attr];//event attribut
-				else node.setAttribute(attr,j[attr])//other attribut
-			};break;
-			case String:node.appendChild(document.createTextNode(j));break;
+	:root {
+		--back: #fff;
+		--text: #000;
+		--link: #00f;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:root {
+			--back: #444;
+			--text: #ddd;
+			--link: #88f;
 		}
-	});
-	return node;
-}
-//////////:
-function CORS(q){return '//cors-anywhere.herokuapp.com/'+q}
+	}
 
-function updateRSS(url,ok_cb,ko_cb){
-	if(localStorage[url])return ok_cb(localStorage[url]);//already in stock
-	$.get(CORS(url),function(xml){
-		var rss=(new DOMParser()).parseFromString(xml,"text/xml");
-		var items=[].slice.call(rss.querySelectorAll('item,entry')).map(function(item){
-		return{
-			title:$('title',item).textContent||'',
-			desc:unescapeEntities(($('description',item)||{}).textContent||'') || ($('comments',item)||{}).textContent,
-			href:($('guid',item)||{}).textContent || ((($('link',item)||{}).attributes||{}).href||{}).value || ($('link',item)||{}).textContent||'',
-			date:new Date(($('pubDate',item)||{}).textContent),
-		}});
-		ok_cb(localStorage[url]=JSON.stringify(items));
-	},ko_cb);
-}
-function init(){
-	$$('[data-fetch]').forEach(function(node){
-		node.innerHTML=''
-		updateRSS('https://'+node.dataset['fetch'],function(result){
-			node.appendChild($.toNode(["h2",node.dataset['title']]))
-			node.appendChild($.toNode(["ul"].concat(JSON.parse(result).map(function(item){
-				if(item.date && (new Date()-new Date(item.date))/(1000*60*60*24)>2)return [];//hide too old (2+day) news
-				return ["li",["a",{href:item.href},item.title],["span",(new Date(item.date)).toDateString()],["p",unescapeEntities(item.desc||'').replace(/<.*?>/g,' ')]]
-			}))))
-		})
-	})
-}
-window.addEventListener('DOMContentLoaded', init);
+	body {
+		color: var(--text);
+		background: var(--back);
+		margin: 0;
+		padding: 0 0 2em 0;
+		font-family: sans-serif;
+	}
+
+	a {
+		color: var(--link);
+	}
+
+	a:not(:hover) {
+		text-decoration: none;
+	}
+
+	.inv {
+		background: var(--text);
+		color: var(--back);
+	}
+
+	.sticky {
+		position: sticky;
+		top: 0;
+		box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.5);
+	}
+
+	body>header {
+		font-size: larger;
+		text-align: center;
+		padding: .2em;
+		margin: 0 0 1em 0;
+	}
+
+	p:empty {
+		display: none;
+	}
+
+	article>header {
+		display: flex;
+		justify-content: space-between;
+	}
+
+	article {
+		padding: 1em;
+	}
+</style>
+<script type="module">
+	const examples = [
+		'news.ycombinator.com/rss',
+		'www.reddit.com/r/programming/.rss',
+		'www.reddit.com/r/linux/.rss',
+		'www.phoronix.com/rss.php',
+	];
+	const el = (tag, props = {}, ch = []) => ch.reduce((e, c) => (e.appendChild(c), e), Object.assign(document.createElement(tag), props))
+	const CORS = (url) => 'https://cors-anywhere.herokuapp.com/https://' + url;
+	const html = (txt) => txt ? el('u', { innerHTML: txt.replace(/src=/g, 'data-src=') }).textContent : txt;
+	const cache = (url, prefix = 'feedcache_') => localStorage[prefix + url] ? Promise.resolve(localStorage[prefix + url]) : fetch(url).then((res) => res.text()).then((text) => localStorage[prefix + url] = text);
+	function loadFeed(url) {
+		const section = el('section', { innerText: 'loading' }); // create and return while the fetch is running async
+		cache(CORS(url)).then(txt => {
+			const rss = (new DOMParser()).parseFromString(txt, "text/xml");
+			section.replaceChildren(...[...rss.querySelectorAll('item,entry')].map(function (item) {
+				const $ = item.querySelector.bind(item);
+				const date = new Date($('updated,pubDate')?.textContent || 0);
+				const href = $('guid')?.textContent || $('link')?.attributes?.href?.value || $('link')?.textContent
+				return el('article', { hidden: (new Date() - date) > (48 * 60 * 60 * 1000) }, [
+					el('header', {}, [
+						el('a', { href, innerText: $('title').textContent || null }),
+						el('a', { href: html($('comments')?.textContent), hidden: !$('comments'), innerText: '\u{1F4AC}' }),
+						el('time', { innerText: date.toJSON().slice(8, 16) }),
+					]),
+					el('p', { innerText: html($('description')?.textContent) || null }),
+					el('p', { innerText: html($('content')?.textContent) || null }),
+					el('p', { innerText: html($('encoded')?.textContent) || null }),
+				]);
+			}));
+		});
+		return section;
+	}
+	(window.onhashchange = function () {
+		const urls = location.hash.split(/#/g).slice(1); // skip first hash
+		document.body.replaceChildren(...(urls.length ? urls.map((url) => [
+			el("header", { innerText: url.replace(/(www\.)|(\.xml)|(\.rss)|(\?.*)/g, ''), classList: 'inv sticky' }),
+			loadFeed(url)
+		]).flat() : [
+			el('article',{}, [
+				el('p', { innerText: "No feeds url given ! put your hash (#) separated list of feeds URLs into the current URL" }),
+				el('a', { innerText: 'like this', href: `#${examples.join('#')}` }),
+				el('p', { innerText: "And bookmark it !" }),
+			])
+		]));
+	})();
 </script>
-<p data-format="rss" data-title="minimachines" data-fetch="feedpress.me/minimachines/"></p>
-<p data-format="rss" data-title="i-programmer" data-fetch="www.i-programmer.info/index.php?option=com_ninjarsssyndicator&feed_id=1"></p>
-<p data-format="rss" data-title="nextinpact" data-fetch="www.nextinpact.com/rss/news.xml"></p>
-<p data-format="rss" data-title="logic-sunrise" data-fetch="www.logic-sunrise.com/forums/rss/forums/1-news-fr/"></p>
-<p data-format="rss" data-title="/r/programming" data-fetch="www.reddit.com/r/programming/.rss"></p>
-<p data-format="rss" data-title="HackerNews" data-fetch="news.ycombinator.com/rss"></p>
-<p data-format="rss" data-title="/r/linux" data-fetch="www.reddit.com/r/linux/.rss"></p>
-<p data-format="rss" data-title="phoronix" data-fetch="www.phoronix.com/rss.php"></p>
-<p data-format="rss" data-title="undeadly" data-fetch="undeadly.org/cgi?action=rss"></p>
-
-<button onclick="window.scrollTo(0,0);for(var a in localStorage)if(a.match(/^https?:/))delete localStorage[a];init()">&#8635;</button>
