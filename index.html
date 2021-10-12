@@ -98,11 +98,11 @@
 					el('p', { innerText: html($('encoded')?.textContent) || null }),
 				]);
 			}));
-		});
+		}, ko => section.innerText = 'failed').catch(ko => section.innerText = 'rejected');
 		return section;
 	}
 	(window.onhashchange = function () {
-		const urls = location.hash.split(/#/g).slice(1); // skip first hash
+		const urls = location.hash.replaceAll('%23', '#').split(/#/g).slice(1); // skip first hash
 		document.body.replaceChildren(...(urls.length ? urls.map((url) => [
 			el("header", { innerText: url.replace(/(www\.)|(\.xml)|(\.rss)|(\?.*)/g, ''), classList: 'inv sticky' }),
 			loadFeed(url)
