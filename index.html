@@ -74,7 +74,7 @@
 		'www.phoronix.com/rss.php',
 	];
 	const el = (tag, props = {}, ch = []) => ch.reduce((e, c) => (e.appendChild(c), e), Object.assign(document.createElement(tag), props))
-	const CORS = (url) => 'https://cors-anywhere.herokuapp.com/https://' + url;
+	const CORS = (url) => 'https://damp-mouse-75ea.pejan97800.workers.dev/https://' + url;
 	const html = (txt) => txt ? el('u', { innerHTML: txt.replace(/src=/g, 'data-src=') }).textContent : txt;
 	const cache = (url, until, pre = '_cache_', date = '_date_') => new Date - (+localStorage[date + url] || 0) < until ?
 		Promise.resolve(localStorage[pre + url]) :
