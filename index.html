@@ -86,7 +86,7 @@
 			section.replaceChildren(...[...rss.querySelectorAll('item,entry')].map(function (item) {
 				const $ = item.querySelector.bind(item);
 				const date = new Date($('updated,pubDate')?.textContent || 0);
-				const href = $('guid')?.textContent || $('link')?.attributes?.href?.value || $('link')?.textContent
+				const href = $('link')?.attributes?.href?.value || $('link')?.textContent || $('guid')?.textContent
 				return el('article', { hidden: (new Date() - date) > (48 * 60 * 60 * 1000) }, [
 					el('header', {}, [
 						el('a', { href, innerText: $('title').textContent || null }),
@@ -95,6 +95,7 @@
 					]),
 					el('p', { innerText: html($('description')?.textContent) || null }),
 					el('p', { innerText: html($('content')?.textContent) || null }),
+					el('p', { innerText: html($('summary')?.textContent) || null }),
 					el('p', { innerText: html($('encoded')?.textContent) || null }),
 				]);
 			}));
