@@ -32,12 +32,12 @@
 	}
 
 	article {
-		padding: 1em;
+		margin: 1em;
 	}
 
 	article>header {
-		display: flex;
-		justify-content: space-between;
+		display: grid;
+		grid-template-columns: 1fr max-content max-content;
 	}
 </style>
 <script type="module">
@@ -59,14 +59,14 @@
 	function loadFeed(url = "") {
 		const section = el('section', {}, ['loading']); // create and return while the fetch is running async
 		cache(CORS(url), 60 * 60 * 1000).then(txt => { // cache the feed for 1 hour
-			if (url.endsWith('json')) return el("article", {}, [el("pre", JSON.stringify(JSON.parse(txt)))]);
+			if (url.endsWith('json')) return section.replaceChildren(el("article", {}, [el("pre", {}, [JSON.stringify(JSON.parse(txt), null, '  ')])]));
 			const rss = (new DOMParser()).parseFromString(txt, "text/xml");
 			section.replaceChildren(...[...rss.querySelectorAll('item,entry')].map(function (item) {
 				const $ = item.querySelector.bind(item);
 				const date = new Date($('updated,pubDate')?.textContent || 0);
 				return el('article', { hidden: (+new Date() - +date) > (48 * 60 * 60 * 1000) }, [
 					el('header', {}, [
-						el('a', { href: $('link')?.attributes?.href?.value || $('link,guid')?.textContent }, $('title').textContent),
+						el('a', { href: $('link')?.attributes?.href?.value || $('link,guid')?.textContent }, [$('title').textContent]),
 						el('a', { href: html($('comments')?.textContent), hidden: !$('comments') }, ['\u{1F4AC}']),
 						el('time', {}, [date.toJSON().slice(8, 16)]),
 					]),
