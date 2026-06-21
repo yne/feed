@@ -1,102 +1,79 @@
 <!doctype html>
 <title>Feed</title>
 <link rel="icon"
-	href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M7,6L4,6L4,7L7,7M7,4L3,4L3,5L7,5M7,1L6,1L6,3L7,3M5,1L3,1L3,3L5,3M2,7L2,0L8,0L8,7L7,8L1,8L0,7L0,1L2,1L1,2L1,7"></path></svg>'>
+	href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><style>path{fill:dark}@media(prefers-color-scheme:dark){path{fill:white}}</style><path d="M7,6L4,6L4,7L7,7M7,4L3,4L3,5L7,5M7,1L6,1L6,3L7,3M5,1L3,1L3,3L5,3M2,7L2,0L8,0L8,7L7,8L1,8L0,7L0,1L2,1L1,2L1,7"></path></svg>'>
 <meta name="description" content="Lightweight Vanilla RSS Feed player">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
 <style>
-	:root {
-		--back: #fff;
-		--text: #000;
-		--link: #00f;
-	}
-
-	@media (prefers-color-scheme: dark) {
-		:root {
-			--back: #444;
-			--text: #ddd;
-			--link: #88f;
-		}
-	}
-
 	body {
-		color: var(--text);
-		background: var(--back);
 		margin: 0;
 		padding: 0 0 2em 0;
 		font-family: sans-serif;
-	}
-
-	a {
-		color: var(--link);
 	}
 
 	a:not(:hover) {
 		text-decoration: none;
 	}
 
-	.inv {
-		background: var(--text);
-		color: var(--back);
-	}
-
-	.sticky {
-		position: sticky;
-		top: 0;
-		box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.5);
-	}
-
 	body>header {
+		background: canvas;
+		border-bottom: 2px solid;
 		font-size: larger;
 		text-align: center;
 		padding: .2em;
 		margin: 0 0 1em 0;
+		position: sticky;
+		top: 0;
 	}
 
 	p:empty {
 		display: none;
 	}
 
+	article {
+		padding: 1em;
+	}
+
 	article>header {
 		display: flex;
 		justify-content: space-between;
 	}
-
-	article {
-		padding: 1em;
-	}
 </style>
 <script type="module">
+	//@ts-check
+	///<reference lib="es2021" />
+
 	const examples = [
 		'news.ycombinator.com/rss',
-		'www.reddit.com/r/programming/.rss',
-		'www.reddit.com/r/linux/.rss',
 		'www.phoronix.com/rss.php',
+		'www.reddit.com/r/programming/.rss',
+		'www.reddit.com/r/linux/.rss'
 	];
-	const el = (tag, props = {}, ch = []) => ch.reduce((e, c) => (e.appendChild(c), e), Object.assign(document.createElement(tag), props))
+	const el = (tag, props = {}, ch = []) => ch.reduce((e, c) => (e.append(c), e), Object.assign(document.createElement(tag), props))
 	const CORS = (url) => 'https://damp-mouse-75ea.pejan97800.workers.dev/https://' + url;
-	const html = (txt) => txt ? el('u', { innerHTML: txt.replace(/src=/g, 'data-src=') }).textContent : txt;
-	const cache = (url, until, pre = '_cache_', date = '_date_') => new Date - (+localStorage[date + url] || 0) < until ?
+	const html = (txt) => (txt ? el('u', { innerHTML: txt.replace(/src=/g, 'data-src=') }).textContent : txt) || '';
+	const cache = (url, until, pre = '_cache_', date = '_date_') => +new Date() - (+localStorage[date + url] || 0) < until ?
 		Promise.resolve(localStorage[pre + url]) :
 		fetch(url).then((res) => res.text()).then((text) => (localStorage[date + url] = +new Date, localStorage[pre + url] = text));
-	function loadFeed(url) {
-		const section = el('section', { innerText: 'loading' }); // create and return while the fetch is running async
+	function loadFeed(url = "") {
+		const section = el('section', {}, ['loading']); // create and return while the fetch is running async
 		cache(CORS(url), 60 * 60 * 1000).then(txt => { // cache the feed for 1 hour
+			if (url.endsWith('json')) return el("article", {}, [el("pre", JSON.stringify(JSON.parse(txt)))]);
 			const rss = (new DOMParser()).parseFromString(txt, "text/xml");
 			section.replaceChildren(...[...rss.querySelectorAll('item,entry')].map(function (item) {
 				const $ = item.querySelector.bind(item);
 				const date = new Date($('updated,pubDate')?.textContent || 0);
-				const href = $('link')?.attributes?.href?.value || $('link')?.textContent || $('guid')?.textContent
-				return el('article', { hidden: (new Date() - date) > (48 * 60 * 60 * 1000) }, [
+				return el('article', { hidden: (+new Date() - +date) > (48 * 60 * 60 * 1000) }, [
 					el('header', {}, [
-						el('a', { href, innerText: $('title').textContent || null }),
-						el('a', { href: html($('comments')?.textContent), hidden: !$('comments'), innerText: '\u{1F4AC}' }),
-						el('time', { innerText: date.toJSON().slice(8, 16) }),
+						el('a', { href: $('link')?.attributes?.href?.value || $('link,guid')?.textContent }, $('title').textContent),
+						el('a', { href: html($('comments')?.textContent), hidden: !$('comments') }, ['\u{1F4AC}']),
+						el('time', {}, [date.toJSON().slice(8, 16)]),
 					]),
-					el('p', { innerText: html($('description')?.textContent) || null }),
-					el('p', { innerText: html($('content')?.textContent) || null }),
-					el('p', { innerText: html($('summary')?.textContent) || null }),
-					el('p', { innerText: html($('encoded')?.textContent) || null }),
+					el('p', {}, [html($('description')?.textContent)]),
+					el('p', {}, [html($('content')?.textContent)]),
+					el('p', {}, [html($('summary')?.textContent)]),
+					el('p', {}, [html($('encoded')?.textContent)]),
 				]);
 			}));
 		}, ko => section.innerText = 'failed').catch(ko => section.innerText = 'rejected');
@@ -105,13 +82,13 @@
 	(window.onhashchange = function () {
 		const urls = location.hash.replaceAll('%23', '#').split(/#/g).slice(1); // skip first hash
 		document.body.replaceChildren(...(urls.length ? urls.map((url) => [
-			el("header", { innerText: url.replace(/(www\.)|(\.xml)|(\.rss)|(\?.*)/g, ''), classList: 'inv sticky' }),
+			el("header", { innerText: url.replace(/(www\.)|(\.xml)|(\.rss)|(\?.*)/g, '') }),
 			loadFeed(url)
 		]).flat() : [
 			el('article', {}, [
-				el('p', { innerText: "No feeds url given ! put your hash (#) separated list of feeds URLs into the current URL" }),
-				el('a', { innerText: 'like this', href: `#${examples.join('#')}` }),
-				el('p', { innerText: "And bookmark it !" }),
+				el('p', {}, ["No feeds url given ! put your hash (#) separated list of feeds URLs into the current URL"]),
+				el('a', { href: `#${examples.join('#')}` }, ['like this']),
+				el('p', {}, ["And bookmark it !"]),
 			])
 		]));
 	})();
