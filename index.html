@@ -55,11 +55,12 @@
 	const html = (txt) => (txt ? el('u', { innerHTML: txt.replace(/src=/g, 'data-src=') }).textContent : txt) || '';
 	const cache = (url, until, pre = '_cache_', date = '_date_') => +new Date() - (+localStorage[date + url] || 0) < until ?
 		Promise.resolve(localStorage[pre + url]) :
-		fetch(url).then((res) => res.text()).then((text) => (localStorage[date + url] = +new Date, localStorage[pre + url] = text));
+		fetch(url).then((res) => res.text()).then((text) => (localStorage[date + url] = +new Date(), localStorage[pre + url] = text));
 	function loadFeed(url = "") {
 		const section = el('section', {}, ['loading']); // create and return while the fetch is running async
-		cache(CORS(url), 60 * 60 * 1000).then(txt => { // cache the feed for 1 hour
-			if (url.endsWith('json')) return section.replaceChildren(el("article", {}, [el("pre", {}, [JSON.stringify(JSON.parse(txt), null, '  ')])]));
+		const isJson = url.endsWith('json');
+		cache(CORS(url), isJson ? 0 : 60 * 60 * 1000).then(txt => { // cache the feed for 1 hour
+			if (isJson) return section.replaceChildren(el("article", {}, [el("pre", {}, [JSON.stringify(JSON.parse(txt), null, '  ')])])); // TODO add JQ
 			const rss = (new DOMParser()).parseFromString(txt, "text/xml");
 			section.replaceChildren(...[...rss.querySelectorAll('item,entry')].map(function (item) {
 				const $ = item.querySelector.bind(item);
